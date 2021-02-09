@@ -14,13 +14,17 @@ class App:
         return map_request
 
     def create_image(self, content):
+
+        """ Возвращает созданную картинку """
+        map_file = "map.png"
+
         try:
-            with open(self.map_file, "wb") as file:
-                file.write(self.response.content)
+            with open(map_file, "wb") as file:
+                file.write(content)
         except IOError as ex:
             print("Ошибка записи временного файла:", ex)
             sys.exit(2)
-        return self.map_file
+        return map_file
 
     def run(self):
         """ Основной цикл """
@@ -33,3 +37,28 @@ class App:
     def draw(self):
         """ Отрисовка """
         pass
+
+
+def take_arguments():
+    print('Задавать таким образом: координаты через ",", а масштаб через пробел')
+    print('Пример: 135.746181,-27.483765 20,20')
+    a = list(input().split())
+
+    a = '&spn='.join(a)
+
+    map_locations = {
+        "map": ("ll=" + a, "sat")
+    }
+
+    return map_locations
+
+
+if __name__ == "__main__":
+    # запускаем pygame
+    pygame.init()
+    # получаем данные
+    map_locations = take_arguments()
+    # запускаем наше приложение
+    App(map_locations).run()
+    # закрываем pygame
+    pygame.quit()
