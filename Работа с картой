@@ -14,15 +14,13 @@ class App:
         return map_request
 
     def create_image(self, content):
-        """ Возвращает созданную картинку """
-        map_file = "map.png"
         try:
-            with open(map_file, "wb") as file:
-                file.write(content)
+            with open(self.map_file, "wb") as file:
+                file.write(self.response.content)
         except IOError as ex:
             print("Ошибка записи временного файла:", ex)
             sys.exit(2)
-        return map_file
+        return self.map_file
 
     def run(self):
         """ Основной цикл """
