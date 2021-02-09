@@ -7,6 +7,7 @@ import os
 class App:
     def __init__(self, map_location):
         self.map_location = map_location
+        self.running = True
 
     def get_request(self):
         """ Получаем ссылку на карту """
@@ -14,10 +15,8 @@ class App:
         return map_request
 
     def create_image(self, content):
-
         """ Возвращает созданную картинку """
         map_file = "map.png"
-
         try:
             with open(map_file, "wb") as file:
                 file.write(content)
@@ -28,11 +27,15 @@ class App:
 
     def run(self):
         """ Основной цикл """
-        pass
+        while self.running:
+            for event in pygame.event.get():
+                self.do_event(event)
+            self.draw()
 
     def do_event(self, event):
         """ Реакция на события """
-        pass
+        if event.type == pygame.QUIT:
+            self.running = False
 
     def draw(self):
         """ Отрисовка """
@@ -54,11 +57,8 @@ def take_arguments():
 
 
 if __name__ == "__main__":
-    # запускаем pygame
     pygame.init()
-    # получаем данные
-    map_locations = take_arguments()
-    # запускаем наше приложение
-    App(map_locations).run()
-    # закрываем pygame
+    map_locations = take_arguments()  # получаем данные
+    screen = pygame.display.set_mode([500, 500])  # основной экран
+    App(map_locations).run()  # запускаем наше приложение
     pygame.quit()
