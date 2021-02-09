@@ -8,6 +8,7 @@ class App:
     def __init__(self, map_location):
         self.map_location = map_location
         self.running = True
+        self.map_file = "map.png"
 
     def get_request(self):
         """ Получаем ссылку на карту """
