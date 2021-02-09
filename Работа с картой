@@ -9,18 +9,11 @@ class App:
         self.map_location = map_location
 
     def get_request(self):
+        """ Получаем ссылку на карту """
         map_request = None
         return map_request
 
     def create_image(self, content):
-        self.response = requests.get(self.map_request)
-
-        if not self.response:
-            print("Ошибка выполнения запроса:")
-            print(self.map_request)
-            print("Http статус:", self.response.status_code, "(", self.response.reason, ")")
-            sys.exit(1)
-        self.map_file = "map.png"
         try:
             with open(self.map_file, "wb") as file:
                 file.write(self.response.content)
@@ -30,10 +23,13 @@ class App:
         return self.map_file
 
     def run(self):
+        """ Основной цикл """
         pass
 
     def do_event(self, event):
+        """ Реакция на события """
         pass
 
     def draw(self):
+        """ Отрисовка """
         pass
