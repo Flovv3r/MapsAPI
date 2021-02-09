@@ -2,3 +2,25 @@ import pygame
 import requests
 import sys
 import os
+
+
+class App:
+    def __init__(self, map_location):
+        self.map_location = map_location
+
+    def get_request(self):
+        map_request = None
+        return map_request
+
+    def create_image(self, content):
+        image = None
+        return image
+
+    def run(self):
+        pass
+
+    def do_event(self, event):
+        pass
+
+    def draw(self):
+        pass
