@@ -35,6 +35,11 @@ class App:
             print("Ошибка записи временного файла:", ex)
             sys.exit(2)
         return map_file
+        
+    def load_map(self):
+        map_request = self.get_request()
+        self.create_image(map_request.content)
+        screen.blit(pygame.image.load(self.map_file), (0, 0))
 
     def run(self):
         """ Основной цикл """
