@@ -9,10 +9,12 @@ class App:
         self.map_location = map_location
 
     def get_request(self):
+        """ Получаем ссылку на карту """
         map_request = None
         return map_request
 
     def create_image(self, content):
+        """ Возвращает созданную картинку """
         map_file = "map.png"
         try:
             with open(map_file, "wb") as file:
@@ -23,10 +25,13 @@ class App:
         return map_file
 
     def run(self):
+        """ Основной цикл """
         pass
 
     def do_event(self, event):
+        """ Реакция на события """
         pass
 
     def draw(self):
+        """ Отрисовка """
         pass
