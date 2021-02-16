@@ -1,7 +1,8 @@
+import os
+import sys
+
 import pygame
 import requests
-import sys
-import os
 
 
 class App:
@@ -10,6 +11,7 @@ class App:
         self.running = True
         self.map_file = 'map.png'  # имя временного файли
         self.scale = 3  # масштаб
+        self.map_type = "sat,skl"
 
     def terminate(self):
         """ Выключает приложение (полностью) """
@@ -17,15 +19,15 @@ class App:
         os.remove(self.map_file)  # удаляем временный файл
         sys.exit()
 
-    def get_request(self, map_type='sat,skl'):
+    def get_request(self):
         """ Возвращает результат запроста """
         coords = ','.join(map(str, map_location['coords']))
         request = f"ll={coords}&z={self.scale}"
 
         if self.map_location:
-            map_request = f"http://static-maps.yandex.ru/1.x/?{request}&l={map_type}"
+            map_request = f"http://static-maps.yandex.ru/1.x/?{request}&l={self.map_type}"
         else:
-            map_request = f"http://static-maps.yandex.ru/1.x/?l={map_type}"
+            map_request = f"http://static-maps.yandex.ru/1.x/?l={self.map_type}"
 
         response = requests.get(map_request)
         if not response:
@@ -66,6 +68,7 @@ class App:
     def do_event(self, event):
         if event.type == pygame.QUIT:
             self.running = False
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
             # пиближение карты
             if event.button == 4 and self.scale < 17:
@@ -75,8 +78,10 @@ class App:
             elif event.button == 5 and self.scale > 1:
                 self.scale -= 1
                 self.load_map()
+
         elif event.type == pygame.KEYDOWN:
             x, y = map_location['coords']
+
             # перемещение центра карты
             # вверх
             if event.key == pygame.K_UP:
@@ -91,17 +96,24 @@ class App:
             elif event.key == pygame.K_LEFT:
                 x = max(-180, x - 1)
 
+            # изменение слоёв карты
+            # схема
+            elif event.key == pygame.K_1:
+                self.map_type = "map"
+            # спутник
+            elif event.key == pygame.K_2:
+                self.map_type = "sat"
+            # гибрид
+            elif event.key == pygame.K_3:
+                self.map_type = "sat,skl"
+
             map_location['coords'] = [x, y]  # изменяем координаты
             self.load_map()  # и заного загружаем карту на экран
 
 
 if __name__ == '__main__':
-    print('Задавать таким образом: координаты через ","')
-    print('Пример: 135.746181,-27.483765')
-
-    a = list(input().split())
     map_location = {
-        "coords": list(map(float, a[0].split(','))),
+        "coords": [135.746181, -27.483765],
     }
 
     # Инициализация карты
