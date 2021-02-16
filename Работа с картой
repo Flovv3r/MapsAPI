@@ -1,7 +1,8 @@
+import os
+import sys
+
 import pygame
 import requests
-import sys
-import os
 
 
 class App:
@@ -10,46 +11,7 @@ class App:
         self.running = True
         self.map_file = 'map.png'  # имя временного файли
         self.scale = 3  # масштаб
-
-        # создание поисковика
-        # Словарь кнопок для поисковика
-        self.keys = {
-            'q': 'й',
-            'w': 'ц',
-            'e': 'у',
-            'r': 'к',
-            't': "е",
-            'y': "н",
-            'u': "г",
-            'i': "ш",
-            'o': "щ",
-            'p': "з",
-            '[': "х",
-            ']': "ъ",
-            'a': "ф",
-            's': "ы",
-            'd': "в",
-            'f': "а",
-            'g': "п",
-            'h': "р",
-            'j': "о",
-            'k': "л",
-            'l': "д",
-            ';': "ж",
-            "'": "э",
-            'z': "я",
-            'x': "ч",
-            'c': "с",
-            'v': "м",
-            'b': "и",
-            'n': "т",
-            'm': "ь",
-            ',': "б",
-            '.': "ю",
-            '`': "ё",
-            ' ': ' '
-        }
-        self.search = ''
+        self.map_type = "sat,skl"
 
     def terminate(self):
         """ Выключает приложение (полностью) """
@@ -57,24 +19,46 @@ class App:
         os.remove(self.map_file)  # удаляем временный файл
         sys.exit()
 
-    def get_request(self, map_type='sat,skl'):
+    def get_response(self, ll=None):
         """ Возвращает результат запроста """
-        coords = ','.join(map(str, map_location['coords']))
-        request = f"ll={coords}&z={self.scale}"
+        if ll is None:
+            coords = ','.join(map(str, map_location['coords']))
+            request = f"ll={coords}&z={self.scale}"
 
-        if self.map_location:
-            map_request = f"http://static-maps.yandex.ru/1.x/?{request}&l={map_type}"
+            if self.map_location:
+                map_request = f"http://static-maps.yandex.ru/1.x/?{request}&l={self.map_type}"
+            else:
+                map_request = f"http://static-maps.yandex.ru/1.x/?l={self.map_type}"
         else:
-            map_request = f"http://static-maps.yandex.ru/1.x/?l={map_type}"
+            map_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={ll}&format=json"
 
         response = requests.get(map_request)
         if not response:
-            print("Ошибка выполнения запроса:")
-            print(map_request)
-            print("Http статус:", response.status_code, "(", response.reason, ")")
-            self.terminate()
+            return False
 
         return response
+
+    def search(self, ll):
+        """ Выполняем поиск """
+        # Выполняем запрос.
+        response = self.get_response(ll)
+
+        # Если ничего не нашлось, то сообщаем пользователю и выходим
+        if not response:
+            pygame.display.set_caption("Ничего не найдено")
+            return
+
+        # Преобразуем ответ в json-объект
+        json_response = response.json()
+        # Получаем первый топоним из ответа геокодера.
+        # Согласно описанию ответа, он находится по следующему пути:
+        toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+        # Координаты центра топонима:
+        toponym_coodrinates = toponym["Point"]["pos"]
+        # Изменяем координаты центра карты
+        self.map_location['coords'] = list(map(float, toponym_coodrinates.split()))
+        # Загружаем карту
+        self.load_map()
 
     def create_image(self, content):
         """ Перезаписывает временный файл карты """
@@ -87,7 +71,7 @@ class App:
     def load_map(self):
         """ Загружает карту на экран """
         # получаем ссылку на карту
-        map_request = self.get_request()
+        map_request = self.get_response()
         # перезаписываем карту
         self.create_image(map_request.content)
         # загружаем карту на экран
@@ -100,15 +84,13 @@ class App:
         self.load_map()
         while self.running:
             for event in pygame.event.get():
-                try:
-                    self.do_event(event)
-                except Exception:
-                    pass
+                self.do_event(event)
         self.terminate()
 
     def do_event(self, event):
         if event.type == pygame.QUIT:
             self.running = False
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
             # пиближение карты
             if event.button == 4 and self.scale < 17:
@@ -118,48 +100,58 @@ class App:
             elif event.button == 5 and self.scale > 1:
                 self.scale -= 1
                 self.load_map()
+
         elif event.type == pygame.KEYDOWN:
-            x, y = map_location['coords']
+            def load():
+                self.map_location['coords'] = [x, y]  # изменяем координаты
+                self.load_map()  # и заного загружаем карту на экран
+
+            x, y = self.map_location['coords']
+
             # перемещение центра карты
             # вверх
             if event.key == pygame.K_UP:
                 y = min(80, y + 1)
-                map_location['coords'] = [x, y]  # изменяем координаты
-                self.load_map()  # и заного загружаем карту на экран
+                load()
             # вниз
             elif event.key == pygame.K_DOWN:
                 y = max(-80, y - 1)
-                map_location['coords'] = [x, y]  # ...
-                self.load_map()  # ...
+                load()
             # вправо
             elif event.key == pygame.K_RIGHT:
                 x = min(180, x + 1)
-                map_location['coords'] = [x, y]  # ...
-                self.load_map()  # ...
+                load()
             # влево
             elif event.key == pygame.K_LEFT:
                 x = max(-180, x - 1)
-                map_location['coords'] = [x, y]  # ...
-                self.load_map()  # ...
-            elif chr(event.key) in self.keys.keys():
-                self.search += self.keys[chr(event.key)]
-                pygame.display.set_caption('Поиск: ' + self.search)
-            elif event.key == pygame.K_BACKSPACE:
-                if event.mod & pygame.KMOD_LCTRL:
-                    self.search = ''
-                    pygame.display.set_caption('Поиск: ' + self.search)
-                else:
-                    self.search = self.search[:-1]
-                    pygame.display.set_caption('Поиск: ' + self.search)
+                load()
+
+            # изменение слоёв карты
+            # схема
+            elif event.key == pygame.K_1:
+                self.map_type = "map"
+                load()
+            # спутник
+            elif event.key == pygame.K_2:
+                self.map_type = "sat"
+                load()
+            # гибрид
+            elif event.key == pygame.K_3:
+                self.map_type = "sat,skl"
+                load()
+
+            elif event.key == pygame.K_KP_ENTER:
+                self.search(pygame.display.get_caption())
 
 
 if __name__ == '__main__':
     map_location = {
-        "coords": [135.746181, -27.483765]#list(map(float, a[0].split(','))),
+        "coords": [135.746181, -27.483765],
     }
 
     # Инициализация карты
     pygame.init()
+    pygame.display.set_caption("Франция")
     screen = pygame.display.set_mode((600, 450))
 
     App(map_location).run()
